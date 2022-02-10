@@ -24,6 +24,11 @@
       "@ns": [
         "../NetscriptDefinitions.d.ts"
       ]
-    }
+    },
+    "lib": [
+      "es2018",
+      "dom",
+      "DOM.Iterable"
+    ]
   }
 }
