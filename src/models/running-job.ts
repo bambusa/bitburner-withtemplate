@@ -1,5 +1,5 @@
 export class RunningJob {
-    constructor(pid:number, type:string, hostname:string, target:string, threads:number, start:number, end:number, expectedOutcome:number){
+    constructor(pid: number, type: string, hostname: string, target: string, threads: number, start: number, end: number, expectedOutcome: number, hacktime: number) {
         this.pid = pid;
         this.type = type;
         this.hostname = hostname;
@@ -8,25 +8,19 @@ export class RunningJob {
         this.start = start;
         this.end = end;
         this.expectedOutcome = expectedOutcome;
+        this.hacktime = hacktime;
     }
-    /** @type{number} */
-    pid:number;
-    /** @type{string} */
-    type:string;
-    /** @type{string} */
-    hostname:string;
-    /** @type{string} */
-    target:string;
-    /** @type{number} */
-    threads:number;
-    /** @type{number} */
-    start:number;
-    /** @type{number} */
-    end:number;
-    /** @type{number} */
-    expectedOutcome:number;
+    pid: number;
+    type: string;
+    hostname: string;
+    target: string;
+    threads: number;
+    start: number;
+    end: number;
+    expectedOutcome: number;
+    hacktime: number;
 }
 
 RunningJob.prototype.toString = function () {
-    return ""+this.pid+" "+this.type+" "+this.hostname+" "+this.target+" "+this.threads+" "+this.start+" "+this.end+" "+this.expectedOutcome;
+    return "" + this.pid + " " + this.type + " " + this.hostname + " " + this.target + " " + this.threads + " " + this.start + " " + this.end + " " + this.expectedOutcome;
 }

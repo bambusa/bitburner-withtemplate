@@ -1,7 +1,10 @@
 import {
-    Player, Server
+  Player,
+  Server
 } from '@ns'
-import { BitNodeMultiplier } from '/models/bit-node-multiplier';
+import {
+  BitNodeMultiplier
+} from '/models/bit-node-multiplier';
 
 /**
  * Returns the chance the player has to successfully hack a server
@@ -100,6 +103,25 @@ export function calculateWeakenTime(server: Server, player: Player): number {
 }
 
 export function calculateIntelligenceBonus(intelligence: number, weight = 1): number {
-    return 1 + (weight * Math.pow(intelligence, 0.8)) / 600;
+  return 1 + (weight * Math.pow(intelligence, 0.8)) / 600;
+}
+
+export function calculateServerGrowth(server: Server, threads: number, p: Player, cores = 1): number {
+  const numServerGrowthCycles = Math.max(Math.floor(threads), 0);
+
+  //Get adjusted growth rate, which accounts for server security
+  const growthRate = 1.03;
+  let adjGrowthRate = 1 + (growthRate - 1) / server.hackDifficulty;
+  if (adjGrowthRate > 1.0035) {
+    adjGrowthRate = 1.0035;
   }
-  
+
+  //Calculate adjusted server growth rate based on parameters
+  const serverGrowthPercentage = server.serverGrowth / 100;
+  const numServerGrowthCyclesAdjusted =
+    numServerGrowthCycles * serverGrowthPercentage * BitNodeMultiplier.ServerGrowthRate;
+
+  //Apply serverGrowth for the calculated number of growth cycles
+  const coreBonus = 1 + (cores - 1) / 16;
+  return Math.pow(adjGrowthRate, numServerGrowthCyclesAdjusted * p.hacking_grow_mult * coreBonus);
+}

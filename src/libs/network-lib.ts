@@ -126,7 +126,7 @@ export async function progressLoop(ns: NS) : Promise<number> {
 		await tryUpgradeNodes(ns, 200);
 	} else if (gameStateLevel == 8) {
 		await exploreAndRootServers(ns, "home", "home")
-		await tryReplaceServer(ns, 65536);
+		// await tryReplaceServer(ns, 65536);
 	}
 
 	return gameStateLevel;
