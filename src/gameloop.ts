@@ -18,7 +18,7 @@ import {
     RunningJob
 } from "models/running-job"
 import {
-    progressLoop
+    progressLoop as networkLoop
 } from "libs/network-lib"
 import {
     Misc
@@ -37,6 +37,7 @@ import {
 import {
     calculateHackingTime
 } from '/libs/formulas-lib';
+import { factionLoop } from '/libs/faction-lib'
 
 const batchLogFile = "batch-log-file.txt";
 
@@ -49,15 +50,25 @@ export async function main(ns: NS): Promise < void > {
     const misc: Misc = {
         ram: 0
     };
+    const backdoorsInstalled: string[] = [];
 
     await ns.write(batchLogFile, "[]", "w");
+
+    const lastTimeFactionLoop = Date.now();
     while (true) {
         const started = Date.now();
         const player = ns.getPlayer();
-        const gameStateLevel = await progressLoop(ns);
+        const gameStateLevel = await networkLoop(ns, backdoorsInstalled);
+
+        // const now = Date.now();
+        // if (now - lastTimeFactionLoop > 60000) {
+        //     await factionLoop(ns, backdoorsInstalled, player);
+        //     lastTimeFactionLoop = now;
+        // }
+
         console.log("/// *** Starting loop of gameloop.js at level " + gameStateLevel + " *** \\\\\\");
         updateServerInfo(ns, hackedServers, purchasedServers, misc, player);
-        const priotizedServers = prioitizeServers(hackedServers, misc, gameStateLevel);
+        const priotizedServers = prioitizeServers(hackedServers);
 
         for (const targetname of priotizedServers) {
 
@@ -120,7 +131,7 @@ export async function main(ns: NS): Promise < void > {
         const ended = Date.now();
         console.log("Loop took " + (ended - started) + " ms");
         if (!loop) break;
-        await ns.sleep(10000);
+        await ns.sleep(1000);
     }
 }
 
@@ -184,7 +195,7 @@ function predictTargetStatesAfterHack(predictedStates: Record<string, number[]>,
     predictedStates[scripts[2]][2] += securityDiff
 }
 
-function prioitizeServers(hackedServers: Record < string, ServerInfo > , misc: Misc, gameStateLevel: number): string[] {
+function prioitizeServers(hackedServers: Record < string, ServerInfo >): string[] {
 
     let servers: ServerPotential[] = [];
 
@@ -197,7 +208,7 @@ function prioitizeServers(hackedServers: Record < string, ServerInfo > , misc: M
 
     const priotizedServers = [];
     for (const server of servers) {
-        if (server.potential > 1000) {
+        if (server.potential > 0) {
             // if (hackedServers[server.hostname].server.minDifficulty > (gameStateLevel > 3 ? gameStateLevel + 1 : 3)) {
             //     // console.log("too early for "+server[1]);
             // } else {

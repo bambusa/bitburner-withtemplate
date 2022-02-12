@@ -22,9 +22,9 @@ let gameStateLevel;
 
 export async function main(ns: NS): Promise < void > {
 	const loop = ns.args[0] ?? true;
-	await progressLoop(ns);
+	await progressLoop(ns, []);
 	while (loop) {
-		await progressLoop(ns);
+		await progressLoop(ns, []);
 		await ns.asleep(1000);
 	}
 }
@@ -72,24 +72,24 @@ export async function getGameStateLevel(ns: NS) : Promise<number> {
 	return level;
 }
 
-export async function progressLoop(ns: NS) : Promise<number> {
+export async function progressLoop(ns: NS, backdoorsInstalled: string[]) : Promise<number> {
 	gameStateLevel = await getGameStateLevel(ns);
 	const hostHistory: string[] =  [];
 
 	if (gameStateLevel == 1) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", hostHistory);
+		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
 	} else if (gameStateLevel == 2) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", hostHistory);
+		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
 		await tryPurchaseServer(ns, null);
 	} else if (gameStateLevel == 3) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", hostHistory);
+		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
 		await tryPurchaseNode(ns, 10);
 		await tryUpgradeNodes(ns, 10);
 	} else if (gameStateLevel == 4) {
-		await exploreAndRootServers(ns, "home", hostHistory);
+		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
 		if (!ns.scan("home").includes("darkweb") && ns.getPlayer().money >= 200000) {
 			ns.tprint("Buy TOR router");
 		} else {
@@ -112,19 +112,19 @@ export async function progressLoop(ns: NS) : Promise<number> {
 		}
 	} else if (gameStateLevel == 5) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", hostHistory);
+		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
 		await tryReplaceServer(ns, 512);
 	} else if (gameStateLevel == 6) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", hostHistory);
+		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
 		await tryReplaceServer(ns, 4096);
 	} else if (gameStateLevel == 7) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", hostHistory);
+		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
 		await tryPurchaseNode(ns, 20);
 		await tryUpgradeNodes(ns, 200);
 	} else if (gameStateLevel == 8) {
-		await exploreAndRootServers(ns, "home", hostHistory);
+		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
 		// await tryReplaceServer(ns, 65536);
 	}
 

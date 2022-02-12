@@ -70,7 +70,7 @@ export function allServersUpgraded(ns: NS, ram: number): boolean {
     return true;
 }
 
-export async function exploreAndRootServers(ns: NS, hostname: string, visitedHosts: string[], serverHierarchy: ServerHierarchy | null = null): Promise < void > {
+export async function exploreAndRootServers(ns: NS, hostname: string, visitedHosts: string[], backdoorsInstalled: string[], serverHierarchy: ServerHierarchy | null = null): Promise < void > {
     // console.log("exploreAndRootServers " + hostname);
     visitedHosts.push(hostname);
     if (serverHierarchy == null) {
@@ -84,18 +84,18 @@ export async function exploreAndRootServers(ns: NS, hostname: string, visitedHos
     if (hostname != "home") {
         const server = ns.getServer(hostname);
         if (await tryRootServer(ns, server)) {
-        await tryInstallBackdoor(ns, server, serverHierarchy);
+        await tryInstallBackdoor(ns, server, backdoorsInstalled);
         }
     }
 
     for (const child of serverHierarchy.children) {
         if (!visitedHosts.includes(child.hostname)) {
-            await exploreAndRootServers(ns, child.hostname, visitedHosts, serverHierarchy);
+            await exploreAndRootServers(ns, child.hostname, visitedHosts, backdoorsInstalled, serverHierarchy);
         }
     }
 }
 
-async function tryInstallBackdoor(ns: NS, server: Server, serverHierarchy: ServerHierarchy): Promise < void > {
+async function tryInstallBackdoor(ns: NS, server: Server, backdoorsInstalled: string[]): Promise < void > {
     const hostname = server.hostname;
     // console.log("tryInstallBackdoor at " + hostname);
 
@@ -118,20 +118,26 @@ async function tryInstallBackdoor(ns: NS, server: Server, serverHierarchy: Serve
 
         await executeInTerminal(ns, "backdoor");
         // wait for command to finish
-        let terminalLi = await eval("document.getElementById('terminal').getElementsByTagName('li');");
+        let terminal = await eval("document.getElementById('terminal');");
+        if (terminal == null || terminal == undefined) return;
+        let terminalLi = terminal.getElementsByTagName('li');
         let lastLi = terminalLi[terminalLi.length - 1];
         const searchingFor = "Backdoor on '" + hostname + "' successful!";
         while (!lastLi.innerText.includes(searchingFor)) {
             // console.log("looking for " + searchingFor);
             await ns.sleep(1000);
-            terminalLi = await eval("document.getElementById('terminal').getElementsByTagName('li');");
+            terminal = await eval("document.getElementById('terminal');");
+            if (terminal == null || terminal == undefined) return;
+            terminalLi = terminal.getElementsByTagName('li');
             lastLi = terminalLi[terminalLi.length - 1];
         }
 
         await executeInTerminal(ns, "home");
         ns.tprint("\\\\\\ *** Finished using terminal *** ///");
     }
-
+    else if (!backdoorsInstalled.includes(hostname)) {
+        backdoorsInstalled.push(hostname);
+    }
 }
 
 function Search(ns: NS, node: string | null, value: string, track: string[], history: string[]): boolean {
