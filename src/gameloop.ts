@@ -35,7 +35,6 @@ import {
     runWeaken
 } from '/libs/scripts-lib'
 import {
-    calculateServerGrowth,
     calculateHackingTime
 } from '/libs/formulas-lib';
 
@@ -99,7 +98,7 @@ export async function main(ns: NS): Promise < void > {
                     }
                 }
                 if (predictedStates[scripts[0]][0] != targetInfo.server.minDifficulty) {
-                    console.log("predict " + targetname + " after weakentime: security " + predictedStates[scripts[0]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[0]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeWeakenJobCount + " jobs before");
+                    // console.log("predict " + targetname + " after weakentime: security " + predictedStates[scripts[0]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[0]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeWeakenJobCount + " jobs before");
                     const newRunningJob = await runWeaken(serverInfo, targetInfo, predictedStates[scripts[0]], ns, now, weakenEnd, runningJobs);
                     if (newRunningJob != null) {
                         predictTargetStatesAfterWeaken(predictedStates, newRunningJob, targetInfo, ns, player)
@@ -107,7 +106,7 @@ export async function main(ns: NS): Promise < void > {
                     }
                 }
                 if (predictedStates[scripts[1]][0] == targetInfo.server.minDifficulty && predictedStates[scripts[1]][1] != targetInfo.server.moneyMax) {
-                    console.log("predict " + targetname + " after growtime: security " + predictedStates[scripts[1]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[1]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeGrowJobCount + " jobs before");
+                    // console.log("predict " + targetname + " after growtime: security " + predictedStates[scripts[1]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[1]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeGrowJobCount + " jobs before");
                     const newRunningJob = await runGrow(serverInfo, targetInfo, predictedStates[scripts[1]][0], predictedStates[scripts[1]][1], ns, now, growEnd, runningJobs, player);
                     if (newRunningJob != null) {
                         predictTargetStatesAfterGrow(predictedStates, newRunningJob, targetInfo, ns, player)

@@ -73,24 +73,23 @@ export async function getGameStateLevel(ns: NS) : Promise<number> {
 }
 
 export async function progressLoop(ns: NS) : Promise<number> {
-	// const previousLevel = gameStateLevel;
 	gameStateLevel = await getGameStateLevel(ns);
-	// const progressedGameStateLevel = (previousLevel == undefined && gameStateLevel != undefined) || (previousLevel < gameStateLevel);
+	const hostHistory: string[] =  [];
 
 	if (gameStateLevel == 1) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", "home");
+		await exploreAndRootServers(ns, "home", hostHistory);
 	} else if (gameStateLevel == 2) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", "home");
+		await exploreAndRootServers(ns, "home", hostHistory);
 		await tryPurchaseServer(ns, null);
 	} else if (gameStateLevel == 3) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", "home");
+		await exploreAndRootServers(ns, "home", hostHistory);
 		await tryPurchaseNode(ns, 10);
 		await tryUpgradeNodes(ns, 10);
 	} else if (gameStateLevel == 4) {
-		await exploreAndRootServers(ns, "home", "home");
+		await exploreAndRootServers(ns, "home", hostHistory);
 		if (!ns.scan("home").includes("darkweb") && ns.getPlayer().money >= 200000) {
 			ns.tprint("Buy TOR router");
 		} else {
@@ -113,19 +112,19 @@ export async function progressLoop(ns: NS) : Promise<number> {
 		}
 	} else if (gameStateLevel == 5) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", "home")
+		await exploreAndRootServers(ns, "home", hostHistory);
 		await tryReplaceServer(ns, 512);
 	} else if (gameStateLevel == 6) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", "home")
+		await exploreAndRootServers(ns, "home", hostHistory);
 		await tryReplaceServer(ns, 4096);
 	} else if (gameStateLevel == 7) {
 		//tryBuyPortBusters(ns);
-		await exploreAndRootServers(ns, "home", "home")
+		await exploreAndRootServers(ns, "home", hostHistory);
 		await tryPurchaseNode(ns, 20);
 		await tryUpgradeNodes(ns, 200);
 	} else if (gameStateLevel == 8) {
-		await exploreAndRootServers(ns, "home", "home")
+		await exploreAndRootServers(ns, "home", hostHistory);
 		// await tryReplaceServer(ns, 65536);
 	}
 

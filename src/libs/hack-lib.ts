@@ -2,6 +2,7 @@ import { NS } from '@ns'
 import {
     deployScriptTo, scripts
 } from "libs/deploy-lib"
+import { Server } from '@ns';
 
 export const portBusters = ['BruteSSH.exe', 'FTPCrack.exe', 'relaySMTP.exe', 'HTTPWorm.exe', 'SQLInject.exe'];
 
@@ -17,13 +18,13 @@ export function getNumberOfOwnedPortBusters(ns: NS):number {
 }
 
 /** @param {NS} ns **/
-export async function tryRootServer(ns: NS, hostname: string) : Promise <boolean> {
-    const server = ns.getServer(hostname);
+export async function tryRootServer(ns: NS, server: Server) : Promise <boolean> {
     if (server.hasAdminRights) {
         //ns.tprintf("- Root access to %s already gained", hostname);
         return true;
     }
 
+    const hostname = server.hostname;
     if (server.requiredHackingSkill <= ns.getHackingLevel()) {
         const ownedBusters = await getNumberOfOwnedPortBusters(ns);
         if (server.numOpenPortsRequired <= ownedBusters) {
