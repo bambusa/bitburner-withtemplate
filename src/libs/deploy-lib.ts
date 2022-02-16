@@ -1,6 +1,6 @@
 import { NS } from '@ns'
 
-export const scripts = ["weaken.js", "grow.js", "hack.js"];
+export const scripts = ["weaken.js", "grow.js", "hack.js", "share.js"];
 
 export async function main(ns : NS) : Promise<void> {
     const hostname = ns.args[0] as string;

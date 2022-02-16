@@ -3,16 +3,14 @@ import {
 	tryPurchaseServer,
 	tryReplaceServer,
 	allServersUpgraded,
-	exploreAndRootServers
+	exploreAndRootServers,
+	getNumberOfOwnedPortBusters
 } from "libs/server-lib.js";
 import {
 	tryPurchaseNode,
 	tryUpgradeNodes,
 	allNodesUpgraded
 } from "libs/node-lib.js";
-import {
-	getNumberOfOwnedPortBusters
-} from "libs/hack-lib";
 
 // Comment import of getNumberOfOwnedPortBusters and executeInTerminal if home RAM is under 64 GB
 import { executeInTerminal } from "libs/terminal-lib";
@@ -22,9 +20,9 @@ let gameStateLevel;
 
 export async function main(ns: NS): Promise < void > {
 	const loop = ns.args[0] ?? true;
-	await progressLoop(ns, []);
+	await gameStateLoop(ns, []);
 	while (loop) {
-		await progressLoop(ns, []);
+		await gameStateLoop(ns, []);
 		await ns.asleep(1000);
 	}
 }
@@ -72,7 +70,7 @@ export async function getGameStateLevel(ns: NS) : Promise<number> {
 	return level;
 }
 
-export async function progressLoop(ns: NS, backdoorsInstalled: string[]) : Promise<number> {
+export async function gameStateLoop(ns: NS, backdoorsInstalled: string[]) : Promise<number> {
 	gameStateLevel = await getGameStateLevel(ns);
 	const hostHistory: string[] =  [];
 
@@ -125,7 +123,7 @@ export async function progressLoop(ns: NS, backdoorsInstalled: string[]) : Promi
 		await tryUpgradeNodes(ns, 200);
 	} else if (gameStateLevel == 8) {
 		await exploreAndRootServers(ns, "home", hostHistory, backdoorsInstalled);
-		// await tryReplaceServer(ns, 65536);
+		await tryReplaceServer(ns, 65536);
 	}
 
 	return gameStateLevel;

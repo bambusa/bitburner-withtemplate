@@ -92,6 +92,7 @@ export async function runWeaken(hostInfo: ServerInfo, targetInfo: ServerInfo, pr
 }
 
 export async function runGrow(hostInfo: ServerInfo, targetInfo: ServerInfo, difficulty: number, moneyAvailable: number, ns: NS, hackStart: number, hackEnd: number, runningJobs: RunningJobs, player: Player): Promise < RunningJob | null > {
+    if (moneyAvailable == 0) {moneyAvailable = 1;}
     if (growScriptRam < 0) {
         growScriptRam = ns.getScriptRam(scripts[1]);
     }
@@ -101,6 +102,9 @@ export async function runGrow(hostInfo: ServerInfo, targetInfo: ServerInfo, diff
     }
 
     const growNeeded = targetInfo.server.moneyMax / moneyAvailable;
+    if (growNeeded <= 1) {
+        return null;
+    }
     const growThreadsNeeded = Math.ceil(ns.growthAnalyze(targetInfo.server.hostname, growNeeded));
     let threads = maxThreads < growThreadsNeeded ? maxThreads : growThreadsNeeded;
     if (threads < 1) {
