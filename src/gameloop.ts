@@ -29,7 +29,7 @@ const batchLogFile = "batch-log-file.txt";
 export async function main(ns: NS): Promise < void > {
     console.log("/// *** Starting main function of gameloop.js *** \\\\\\");
     const loop = ns.args[0] as boolean ?? true;
-    const mode = ns.args[1] as string ?? "share";
+    const mode = ns.args[1] as string;
     const hackedServers: Record < string, ServerInfo > = {};
     const purchasedServers: Record < string, ServerInfo > = {};
     const runningJobs: RunningJobs = new RunningJobs;
@@ -51,6 +51,14 @@ export async function main(ns: NS): Promise < void > {
         await weakGrowHackLoop(ns, player, purchasedServers, hackedServers, runningJobs);
         if (mode == "share") await shareLoop(ns, purchasedServers, hackedServers);
         else if (mode == "hack") await hackXpLoop(ns, purchasedServers, hackedServers);
+        else {
+            if (gameStateLevel < 3) {
+                await hackXpLoop(ns, purchasedServers, hackedServers);
+            }
+            else {
+                await shareLoop(ns, purchasedServers, hackedServers);
+            }
+        }
 
         const ended = Date.now();
         console.log("Loop took " + (ended - started) + " ms");

@@ -1,73 +1,87 @@
-import { NS, Player, Server } from '@ns'
-import { ServerInfo } from '/models/server-info'
-import { scripts } from '/libs/deploy-lib'
-import { RunningJob } from '/models/running-job'
+import {
+    NS,
+    Player,
+    Server
+} from '@ns'
+import {
+    ServerInfo
+} from '/models/server-info'
+import {
+    scripts
+} from '/libs/deploy-lib'
+import {
+    RunningJob
+} from '/models/running-job'
 import {
     sortServerPotential
 } from "libs/helper-lib.js"
-import { ServerPotential } from '/models/server-potential'
-import { RunningJobs } from '/models/running-jobs'
+import {
+    ServerPotential
+} from '/models/server-potential'
+import {
+    RunningJobs
+} from '/models/running-jobs'
 import {
     runGrow,
     runHack,
     runWeaken
 } from '/libs/scripts-lib'
 
-export async function weakGrowHackLoop(ns: NS, player: Player, purchasedServers: Record < string, ServerInfo >, hackedServers: Record < string, ServerInfo >, runningJobs: RunningJobs): Promise<void> {
+export async function weakGrowHackLoop(ns: NS, player: Player, purchasedServers: Record < string, ServerInfo > , hackedServers: Record < string, ServerInfo > , runningJobs: RunningJobs): Promise < void > {
     const priotizedServers = prioitizeServers(hackedServers);
 
-        for (const targetname of priotizedServers) {
+    for (const targetname of priotizedServers) {
 
-            /** @type{ServerInfo} */
-            const targetInfo = hackedServers[targetname];
-            targetInfo.server = ns.getServer(targetname);
-            const hacktime = ns.getHackTime(targetname);
-            const growtime = ns.getGrowTime(targetname);
-            const weakentime = ns.getWeakenTime(targetname);
-            // console.log("#predictedStates initially:");
-            // console.log(predictedStates);
-            
-            const now = Date.now();
-            const hackEnd = Math.ceil(now + hacktime);
-            const growEnd = Math.ceil(now + growtime);
-            const weakenEnd = Math.ceil(now + weakentime);
-            const predictedStates: Record < string, number[] > = {};
-            predictTargetStates(predictedStates, targetInfo, player, ns, hackEnd, growEnd, weakenEnd, runningJobs);
+        /** @type{ServerInfo} */
+        const targetInfo = hackedServers[targetname];
+        targetInfo.server = ns.getServer(targetname);
+        const hacktime = ns.getHackTime(targetname);
+        const growtime = ns.getGrowTime(targetname);
+        const weakentime = ns.getWeakenTime(targetname);
+        // console.log("#predictedStates initially:");
+        // console.log(predictedStates);
 
-            // runJobs
-            for (const hostname of Object.keys(purchasedServers).concat(Object.keys(hackedServers))) {
-                let serverInfo = purchasedServers[hostname];
-                if (serverInfo == undefined) {
-                    serverInfo = hackedServers[hostname];
-                }
-                if (serverInfo.freeRam < 4) continue;
+        const now = Date.now();
+        const hackEnd = Math.ceil(now + hacktime);
+        const growEnd = Math.ceil(now + growtime);
+        const weakenEnd = Math.ceil(now + weakentime);
+        const predictedStates: Record < string, number[] > = {};
+        predictTargetStates(predictedStates, targetInfo, player, ns, hackEnd, growEnd, weakenEnd, runningJobs);
 
-                if (predictedStates[scripts[2]][0] == targetInfo.server.minDifficulty && predictedStates[scripts[2]][1] == targetInfo.server.moneyMax) {
-                    // console.log("predict " + targetname + " after hacktime: security " + predictedStates[scripts[2]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[2]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeHackJobCount + " jobs before");
-                    const newRunningJob = await runHack(serverInfo, targetInfo, predictedStates[scripts[2]][1], ns, now, hackEnd, runningJobs);
-                    if (newRunningJob != null) {
-                        predictTargetStatesAfterHack(predictedStates, newRunningJob, targetInfo, ns, player)
-                        continue;
-                    }
+        // runJobs
+        for (const hostname of Object.keys(purchasedServers).concat(Object.keys(hackedServers))) {
+            let serverInfo = purchasedServers[hostname];
+            if (serverInfo == undefined) {
+                serverInfo = hackedServers[hostname];
+            }
+            if (serverInfo.freeRam < 4) continue;
+
+            if (predictedStates[scripts[2]][0] == targetInfo.server.minDifficulty && predictedStates[scripts[2]][1] == targetInfo.server.moneyMax) {
+                // console.log("predict " + targetname + " after hacktime: security " + predictedStates[scripts[2]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[2]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeHackJobCount + " jobs before");
+                const newRunningJob = await runHack(serverInfo, targetInfo, predictedStates[scripts[2]][1], ns, now, hackEnd, runningJobs);
+                if (newRunningJob != null) {
+                    predictTargetStatesAfterHack(predictedStates, newRunningJob, targetInfo, ns, player)
+                    continue;
                 }
-                if (predictedStates[scripts[0]][0] != targetInfo.server.minDifficulty) {
-                    // console.log("predict " + targetname + " after weakentime: security " + predictedStates[scripts[0]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[0]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeWeakenJobCount + " jobs before");
-                    const newRunningJob = await runWeaken(serverInfo, targetInfo, predictedStates[scripts[0]], ns, now, weakenEnd, runningJobs);
-                    if (newRunningJob != null) {
-                        predictTargetStatesAfterWeaken(predictedStates, newRunningJob, targetInfo, ns, player)
-                        continue;
-                    }
+            }
+            if (predictedStates[scripts[0]][0] != targetInfo.server.minDifficulty) {
+                // console.log("predict " + targetname + " after weakentime: security " + predictedStates[scripts[0]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[0]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeWeakenJobCount + " jobs before");
+                const newRunningJob = await runWeaken(serverInfo, targetInfo, predictedStates[scripts[0]], ns, now, weakenEnd, runningJobs);
+                if (newRunningJob != null) {
+                    predictTargetStatesAfterWeaken(predictedStates, newRunningJob, targetInfo, ns, player)
+                    continue;
                 }
-                if (predictedStates[scripts[1]][0] == targetInfo.server.minDifficulty && predictedStates[scripts[1]][1] != targetInfo.server.moneyMax) {
-                    // console.log("predict " + targetname + " after growtime: security " + predictedStates[scripts[1]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[1]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeGrowJobCount + " jobs before");
-                    const newRunningJob = await runGrow(serverInfo, targetInfo, predictedStates[scripts[1]][0], predictedStates[scripts[1]][1], ns, now, growEnd, runningJobs, player);
-                    if (newRunningJob != null) {
-                        predictTargetStatesAfterGrow(predictedStates, newRunningJob, targetInfo, ns, player)
-                        continue;
-                    }
+            }
+            if (predictedStates[scripts[1]][0] == targetInfo.server.minDifficulty && predictedStates[scripts[1]][1] != targetInfo.server.moneyMax) {
+                // console.log("predict " + targetname + " after growtime: security " + predictedStates[scripts[1]][0] + "/" + targetInfo.server.minDifficulty + "; money " + predictedStates[scripts[1]][1] + "/" + targetInfo.server.moneyMax + "; " + beforeGrowJobCount + " jobs before");
+                const newRunningJob = await runGrow(serverInfo, targetInfo, predictedStates[scripts[1]][0], predictedStates[scripts[1]][1], ns, now, growEnd, runningJobs, player);
+                if (newRunningJob != null) {
+                    predictTargetStatesAfterGrow(predictedStates, newRunningJob, targetInfo, ns, player)
+                    continue;
                 }
             }
         }
+    }
 }
 
 function predictTargetStates(predictedStates: Record < string, number[] > , targetInfo: ServerInfo, player: Player, ns: NS, hackEnd: number, growEnd: number, weakenEnd: number, runningJobs: RunningJobs): void {
@@ -106,7 +120,7 @@ function predictTargetStates(predictedStates: Record < string, number[] > , targ
     }
 }
 
-function predictTargetStatesAfterWeaken(predictedStates: Record<string, number[]>, runningJob: RunningJob, targetInfo: ServerInfo, ns: NS, player: Player) {
+function predictTargetStatesAfterWeaken(predictedStates: Record < string, number[] > , runningJob: RunningJob, targetInfo: ServerInfo, ns: NS, player: Player) {
     const predictedSecurity = predictSecurityForJob(runningJob, predictedStates[scripts[0]][0], targetInfo)
     const securityDiff = (predictedSecurity - predictedStates[scripts[0]][0])
     predictedStates[scripts[0]][0] = predictedSecurity
@@ -114,7 +128,7 @@ function predictTargetStatesAfterWeaken(predictedStates: Record<string, number[]
     predictedStates[scripts[0]][2] += securityDiff
 }
 
-function predictTargetStatesAfterGrow(predictedStates: Record<string, number[]>, runningJob: RunningJob, targetInfo: ServerInfo, ns: NS, player: Player) {
+function predictTargetStatesAfterGrow(predictedStates: Record < string, number[] > , runningJob: RunningJob, targetInfo: ServerInfo, ns: NS, player: Player) {
     const predictedSecurity = predictSecurityForJob(runningJob, predictedStates[scripts[1]][0], targetInfo)
     const securityDiff = (predictedSecurity - predictedStates[scripts[1]][0])
     predictedStates[scripts[1]][0] = predictedSecurity
@@ -122,7 +136,7 @@ function predictTargetStatesAfterGrow(predictedStates: Record<string, number[]>,
     predictedStates[scripts[1]][2] += securityDiff
 }
 
-function predictTargetStatesAfterHack(predictedStates: Record<string, number[]>, runningJob: RunningJob, targetInfo: ServerInfo, ns: NS, player: Player) {
+function predictTargetStatesAfterHack(predictedStates: Record < string, number[] > , runningJob: RunningJob, targetInfo: ServerInfo, ns: NS, player: Player) {
     const predictedSecurity = predictSecurityForJob(runningJob, predictedStates[scripts[2]][0], targetInfo)
     const securityDiff = (predictedSecurity - predictedStates[scripts[2]][0])
     predictedStates[scripts[2]][0] = predictedSecurity
@@ -130,7 +144,7 @@ function predictTargetStatesAfterHack(predictedStates: Record<string, number[]>,
     predictedStates[scripts[2]][2] += securityDiff
 }
 
-function prioitizeServers(hackedServers: Record < string, ServerInfo >): string[] {
+function prioitizeServers(hackedServers: Record < string, ServerInfo > ): string[] {
 
     let servers: ServerPotential[] = [];
 
@@ -140,21 +154,17 @@ function prioitizeServers(hackedServers: Record < string, ServerInfo >): string[
         servers.push(new ServerPotential(serverInfo.hackPotential, hostname));
     }
     servers = servers.sort(sortServerPotential).reverse();
-
     const priotizedServers: string[] = [];
     for (const server of servers) {
-        if (server.potential > 0) {
-            // if (hackedServers[server.hostname].server.minDifficulty > (gameStateLevel > 3 ? gameStateLevel + 1 : 3)) {
-            //     // console.log("too early for "+server[1]);
-            // } else {
-            //     priotizedServers.push(server.hostname);
-            // }
+        if (server.potential > 0 && hackedServers[server.hostname].server.minDifficulty <= 5) {
             priotizedServers.push(server.hostname);
         }
     }
-
-    // console.log("Priotize target " + priotizedServers[0] + " with minSecurity " + hackedServers[priotizedServers[0]].server.minDifficulty + " and maxMoney " + hackedServers[priotizedServers[0]].server.moneyMax);
-    // console.log(priotizedServers);
+    for (const server of servers) {
+        if (server.potential > 0 && hackedServers[server.hostname].server.minDifficulty > 5) {
+            priotizedServers.push(server.hostname);
+        }
+    }
     return priotizedServers;
 }
 
@@ -200,12 +210,12 @@ export async function hackXpLoop(ns: NS, purchasedServers: Record < string, Serv
         const server = await ns.getServer(hostname);
         const threads = Math.floor((server.maxRam - server.ramUsed) / shareRam);
         if (threads > 0) {
-        const pid = await ns.exec(scripts[2], hostname, threads, "n00dles", Date.now())
-        if (pid > 0) {
-            serverInfo.freeRam -= shareRam * threads;
-        } else {
-            console.log("could not run hack on " + hostname + " with " + threads + " threads");
+            const pid = await ns.exec(scripts[2], hostname, threads, "n00dles", Date.now())
+            if (pid > 0) {
+                serverInfo.freeRam -= shareRam * threads;
+            } else {
+                console.log("could not run hack on " + hostname + " with " + threads + " threads");
+            }
         }
-    }
     }
 }
