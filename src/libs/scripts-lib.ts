@@ -23,7 +23,7 @@ let hackScriptRam = -1;
 let weakenScriptRam = -1;
 let growScriptRam = -1;
 
-export async function runHack(hostInfo: ServerInfo, targetInfo: ServerInfo, moneyAvailable: number, ns: NS, hackStart: number, hackEnd: number, runningJobs: RunningJobs): Promise < RunningJob | null > {
+export async function runHack(hostInfo: ServerInfo, targetInfo: ServerInfo, ns: NS, runningJobs: RunningJobs, farmXp = false): Promise < RunningJob | null > {
     if (hackScriptRam < 0) {
         hackScriptRam = ns.getScriptRam(scripts[2]);
     }
@@ -32,15 +32,18 @@ export async function runHack(hostInfo: ServerInfo, targetInfo: ServerInfo, mone
         return null;
     }
 
-    const hackThreadsNeeded = Math.ceil((targetInfo.server.moneyMax / 2) / targetInfo.hackAmount);
+    const hackThreadsNeeded = Math.floor((targetInfo.server.moneyMax / 2) / targetInfo.hackAmount);
     let threads = maxThreads < hackThreadsNeeded ? maxThreads : hackThreadsNeeded;
     if (threads < 1) {
         threads = 1;
     }
+    if (farmXp) {
+        threads = maxThreads;
+    }
 
     const hacktime = Math.ceil(ns.getHackTime(targetInfo.server.hostname));
-    hackStart = Date.now();
-    hackEnd = Math.ceil(hackStart + hacktime);
+    const hackStart = Date.now();
+    const hackEnd = Math.ceil(hackStart + hacktime);
     const expectedOutcome = targetInfo.hackAmount * threads;
     const pid = await ns.exec(scripts[2], hostInfo.server.hostname, threads, targetInfo.server.hostname, hackStart, hackEnd, hacktime, expectedOutcome);
     await ns.sleep(execSleep);
@@ -49,7 +52,7 @@ export async function runHack(hostInfo: ServerInfo, targetInfo: ServerInfo, mone
         const newRunningJob = new RunningJob(pid, scripts[2], hostInfo.server.hostname, targetInfo.server.hostname, threads, hackStart, hackEnd, expectedOutcome, hacktime);
         runningJobs.jobs.push(newRunningJob);
         hostInfo.freeRam -= hackScriptRam * threads;
-        console.log("Exec " + pid + " " + scripts[2] + " on " + hostInfo.server.hostname + " with " + threads + " threads and target " + targetInfo.server.hostname + ", expectedOutcome " + expectedOutcome + ", duration "+(hackEnd-hackStart));
+        console.log("Exec " + scripts[2] + " on " + hostInfo.server.hostname + " with " + threads + " threads and target " + targetInfo.server.hostname + ", expectedOutcome " + expectedOutcome + ", duration "+(hackEnd-hackStart));
         return newRunningJob;
     } else {
         console.log("Failed " + scripts[2] + " on " + hostInfo.server.hostname + " with " + threads + " threads and target " + targetInfo.server.hostname);
@@ -57,7 +60,7 @@ export async function runHack(hostInfo: ServerInfo, targetInfo: ServerInfo, mone
     return null;
 }
 
-export async function runWeaken(hostInfo: ServerInfo, targetInfo: ServerInfo, predictedStates: number[], ns: NS, hackStart: number, hackEnd: number, runningJobs: RunningJobs): Promise < RunningJob | null > {
+export async function runWeaken(hostInfo: ServerInfo, targetInfo: ServerInfo, predictedStates: number[], ns: NS, runningJobs: RunningJobs): Promise < RunningJob | null > {
     if (weakenScriptRam < 0) {
         weakenScriptRam = ns.getScriptRam(scripts[0]);
     }
@@ -66,15 +69,15 @@ export async function runWeaken(hostInfo: ServerInfo, targetInfo: ServerInfo, pr
         return null;
     }
 
-    const weakenThreadsNeeded = Math.ceil((predictedStates[0] - targetInfo.server.minDifficulty) / targetInfo.weakenAmount);
+    const weakenThreadsNeeded = Math.floor((predictedStates[0] - targetInfo.server.minDifficulty) / targetInfo.weakenAmount);
     let threads = maxThreads < weakenThreadsNeeded ? maxThreads : weakenThreadsNeeded;
     if (threads < 1) {
         threads = 1;
     }
 
     const hacktime = Math.ceil(ns.getWeakenTime(targetInfo.server.hostname));
-    hackStart = Date.now();
-    hackEnd = Math.ceil(hackStart + hacktime);
+    const hackStart = Date.now();
+    const hackEnd = Math.ceil(hackStart + hacktime);
     const expectedOutcome = predictedStates[2] - targetInfo.weakenAmount * threads;
     const pid = await ns.exec(scripts[0], hostInfo.server.hostname, threads, targetInfo.server.hostname, hackStart, hackEnd, hacktime, expectedOutcome);
     await ns.sleep(execSleep);
@@ -91,7 +94,7 @@ export async function runWeaken(hostInfo: ServerInfo, targetInfo: ServerInfo, pr
     return null;
 }
 
-export async function runGrow(hostInfo: ServerInfo, targetInfo: ServerInfo, difficulty: number, moneyAvailable: number, ns: NS, hackStart: number, hackEnd: number, runningJobs: RunningJobs, player: Player): Promise < RunningJob | null > {
+export async function runGrow(hostInfo: ServerInfo, targetInfo: ServerInfo, difficulty: number, moneyAvailable: number, ns: NS, runningJobs: RunningJobs, player: Player): Promise < RunningJob | null > {
     if (moneyAvailable == 0) {moneyAvailable = 1;}
     if (growScriptRam < 0) {
         growScriptRam = ns.getScriptRam(scripts[1]);
@@ -112,8 +115,8 @@ export async function runGrow(hostInfo: ServerInfo, targetInfo: ServerInfo, diff
     }
 
     const hacktime = Math.ceil(ns.getGrowTime(targetInfo.server.hostname));
-    hackStart = Date.now();
-    hackEnd = Math.ceil(hackStart + hacktime);
+    const hackStart = Date.now();
+    const hackEnd = Math.ceil(hackStart + hacktime);
     const predictedServer = targetInfo.server;
     predictedServer.hackDifficulty = difficulty;
     const expectedOutcome = calculateServerGrowth(targetInfo.server, threads, player);

@@ -48,17 +48,18 @@ export async function main(ns: NS): Promise < void > {
         const gameStateLevel = await gameStateLoop(ns, backdoorsInstalled);
         console.log("/// *** Starting loop of gameloop.js at level " + gameStateLevel + " *** \\\\\\");
         updateServerInfo(ns, hackedServers, purchasedServers, misc, player);
-        await weakGrowHackLoop(ns, player, purchasedServers, hackedServers, runningJobs);
-        if (mode == "share") await shareLoop(ns, purchasedServers, hackedServers);
-        else if (mode == "hack") await hackXpLoop(ns, purchasedServers, hackedServers);
-        else {
-            if (gameStateLevel < 3) {
-                await hackXpLoop(ns, purchasedServers, hackedServers);
-            }
-            else {
-                await shareLoop(ns, purchasedServers, hackedServers);
-            }
-        }
+        await weakGrowHackLoop(ns, player, purchasedServers, hackedServers, runningJobs, gameStateLevel);
+        await shareLoop(ns, purchasedServers, hackedServers);
+        // if (mode == "share") await shareLoop(ns, purchasedServers, hackedServers);
+        // else if (mode == "hack") await hackXpLoop(ns, purchasedServers, hackedServers, runningJobs);
+        // else {
+        //     if (gameStateLevel < 3) {
+        //         await hackXpLoop(ns, purchasedServers, hackedServers, runningJobs);
+        //     }
+        //     else {
+        //         await shareLoop(ns, purchasedServers, hackedServers);
+        //     }
+        // }
 
         const ended = Date.now();
         console.log("Loop took " + (ended - started) + " ms");
@@ -90,7 +91,7 @@ function updateHackedServers(ns: NS, hackedServers: Record < string, ServerInfo 
         serverInfo.hackSecurityRise = ns.hackAnalyzeSecurity(1);
         serverInfo.hackAmount = ns.hackAnalyze(server.hostname) * serverInfo.server.moneyMax;
         const minServer = server;
-        server.hackDifficulty = server.minDifficulty;
+        minServer.hackDifficulty = server.minDifficulty;
         serverInfo.hackPotential = serverInfo.hackAmount / (calculateHackingTime(minServer, player) * 8);
         hackedServers[serverName] = serverInfo;
         misc.ram += server.maxRam;
