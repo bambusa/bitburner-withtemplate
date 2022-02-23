@@ -14,7 +14,7 @@ import {
 } from '/models/server-hierarchy';
 
 const purchasedServerPrefix = "pserv";
-const installBackdoorsAt = ["CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "fulcrumassets"];
+const installBackdoorsAt = ["CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "fulcrumassets", "The-Cave", "w0r1d_d43m0n"];
 
 export async function main(ns: NS): Promise < void > {
     const servers = findHackedServers(ns, "home", "home", null);
@@ -97,7 +97,7 @@ async function tryInstallBackdoor(ns: NS, server: Server, backdoorsInstalled: st
     const hostname = server.hostname;
     if (!installBackdoorsAt.includes(hostname)) return;
 
-    if (!server.backdoorInstalled) {
+    if ((server.hostname != "w0r1d_d43m0n" && !server.backdoorInstalled) || server.hostname == "w0r1d_d43m0n" && await ns.prompt("install backdoor at w0r1d_d43m0n?")) {
         ns.tprint("/// *** Using terminal to install backdoor at " + hostname + " *** \\\\\\");
         ns.tprint("/// *** please wait *** \\\\\\");
         if (!await executeInTerminal(ns, "home ")) {
