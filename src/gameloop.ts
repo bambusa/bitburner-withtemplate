@@ -19,9 +19,10 @@ import {
     RunningJobs
 } from '/models/running-jobs'
 import {
-    calculateHackingTime
+    calculateGrowTime,
+    calculateHackingTime, calculateWeakenTime
 } from '/libs/formulas-lib';
-import { hackXpLoop, weakGrowHackLoop } from '/libs/hack-lib'
+import { hackXpLoop, useFreeThreads, weakGrowHackLoop } from '/libs/hack-lib'
 import { shareLoop } from '/libs/share-lib'
 
 const batchLogFile = "batch-log-file.txt";
@@ -48,18 +49,8 @@ export async function main(ns: NS): Promise < void > {
         const gameStateLevel = await gameStateLoop(ns, backdoorsInstalled);
         console.log("/// *** Starting loop of gameloop.js at level " + gameStateLevel + " *** \\\\\\");
         updateServerInfo(ns, hackedServers, purchasedServers, misc, player);
-        await weakGrowHackLoop(ns, player, purchasedServers, hackedServers, runningJobs, gameStateLevel);
-        await shareLoop(ns, purchasedServers, hackedServers);
-        // if (mode == "share") await shareLoop(ns, purchasedServers, hackedServers);
-        // else if (mode == "hack") await hackXpLoop(ns, purchasedServers, hackedServers, runningJobs);
-        // else {
-        //     if (gameStateLevel < 3) {
-        //         await hackXpLoop(ns, purchasedServers, hackedServers, runningJobs);
-        //     }
-        //     else {
-        //         await shareLoop(ns, purchasedServers, hackedServers);
-        //     }
-        // }
+        await weakGrowHackLoop(ns, player, purchasedServers, hackedServers, runningJobs, gameStateLevel, mode);
+        await useFreeThreads(ns, purchasedServers, hackedServers, runningJobs, gameStateLevel, mode);
 
         const ended = Date.now();
         console.log("Loop took " + (ended - started) + " ms");
@@ -90,9 +81,25 @@ function updateHackedServers(ns: NS, hackedServers: Record < string, ServerInfo 
         serverInfo.weakenAmount = ns.weakenAnalyze(1);
         serverInfo.hackSecurityRise = ns.hackAnalyzeSecurity(1);
         serverInfo.hackAmount = ns.hackAnalyze(server.hostname) * serverInfo.server.moneyMax;
+        
+        if (serverInfo.hackAmount > 0) {
         const minServer = server;
         minServer.hackDifficulty = server.minDifficulty;
-        serverInfo.hackPotential = serverInfo.hackAmount / (calculateHackingTime(minServer, player) * 8);
+        const hackTime = calculateHackingTime(minServer, player);
+        minServer.hackDifficulty += serverInfo.hackSecurityRise;
+        const weakenAfterHackTime = (serverInfo.hackSecurityRise / serverInfo.weakenAmount) * calculateWeakenTime(minServer, player);
+        minServer.hackDifficulty = server.minDifficulty;
+        const growThreads = ns.growthAnalyze(serverName, minServer.moneyMax / (minServer.moneyMax - serverInfo.hackAmount));
+        const growTime = calculateGrowTime(minServer, player) * growThreads;
+        minServer.hackDifficulty += serverInfo.growSecurityRise * growThreads;
+        const weakenAfterGrowThreads = (serverInfo.growSecurityRise * growThreads) / serverInfo.weakenAmount;
+        const weakenAfterGrowTime = calculateWeakenTime(minServer, player) * weakenAfterGrowThreads;
+        serverInfo.hackPotential = serverInfo.hackAmount / (hackTime + weakenAfterHackTime + growTime + weakenAfterGrowTime);
+        }
+        else {
+            serverInfo.hackPotential = 0;
+        }
+
         hackedServers[serverName] = serverInfo;
         misc.ram += server.maxRam;
     }

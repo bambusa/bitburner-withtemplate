@@ -22,6 +22,7 @@ const execSleep = 10;
 let hackScriptRam = -1;
 let weakenScriptRam = -1;
 let growScriptRam = -1;
+let shareScriptRam = -1;
 
 export async function runHack(hostInfo: ServerInfo, targetInfo: ServerInfo, ns: NS, runningJobs: RunningJobs, farmXp = false): Promise < RunningJob | null > {
     if (hackScriptRam < 0) {
@@ -133,4 +134,26 @@ export async function runGrow(hostInfo: ServerInfo, targetInfo: ServerInfo, diff
         console.log("Failed " + scripts[1] + " on " + hostInfo.server.hostname + " with " + threads + " threads and target " + targetInfo.server.hostname);
     }
     return null;
+}
+
+export async function runShare(hostInfo: ServerInfo, ns: NS): Promise < void > {
+    if (shareScriptRam < 0) {
+        shareScriptRam = ns.getScriptRam(scripts[3]);
+    }
+    const threads = Math.floor(hostInfo.freeRam / hackScriptRam);
+    if (threads < 1) {
+        return;
+    }
+
+    const pid = await ns.exec(scripts[3], hostInfo.server.hostname, threads, Date.now());
+    await ns.sleep(execSleep);
+
+    if (pid > 0) {
+        hostInfo.freeRam -= hackScriptRam * threads;
+        console.log("Exec " + scripts[3] + " on " + hostInfo.server.hostname + " with " + threads + " threads");
+        return;
+    } else {
+        console.log("Failed " + scripts[3] + " on " + hostInfo.server.hostname + " with " + threads + " threads");
+    }
+    return;
 }
